@@ -18,7 +18,9 @@ sunday_rate = st.number_input("Sunday Rate", min_value=0.0, value=50.0)
 # 2. Multiple overtime thresholds
 # -------------------------
 st.subheader("Overtime Thresholds and Rates")
-num_thresholds = st.number_input("Number of Overtime Thresholds", min_value=1, value=1, step=1)
+
+# Set default number of thresholds to 2
+num_thresholds = st.number_input("Number of Overtime Thresholds", min_value=1, value=2, step=1)
 
 overtime_thresholds = []
 overtime_rates = []
@@ -26,20 +28,27 @@ overtime_rates = []
 for i in range(int(num_thresholds)):
     col1, col2 = st.columns(2)
     
-    # Determine minimum value for this threshold to enforce ascending order
+    # Minimum value for ascending order
     min_value = overtime_thresholds[i-1] + 0.01 if i > 0 else 0.0
+    
+    # Set default threshold values: 8 for first, 10 for second
+    default_threshold = 8.0 if i == 0 else 10.0 if i == 1 else min_value
+    
+    # Set default overtime rates: 40 for first, 50 for second
+    default_rate = 40.0 if i == 0 else 50.0 if i == 1 else 0.0
     
     threshold = col1.number_input(
         f"Overtime Threshold {i+1} (hours)",
         min_value=min_value,
-        value=8.0 if i == 0 else min_value,
+        value=default_threshold,
         step=0.5,
         key=f"threshold_{i}"
     )
+    
     rate = col2.number_input(
         f"Overtime Rate {i+1}",
         min_value=0.0,
-        value=40.0 if i == 0 else 0.0,
+        value=default_rate,
         step=1.0,
         key=f"rate_{i}"
     )
