@@ -64,33 +64,62 @@ def calculate_pay(
     normal_rate: float,
     saturday_rate: float,
     sunday_rate: float,
-    overtime_threshold: float,
-    overtime_rate: float,
+    overtime_thresholds: list = None,
+    overtime_rates: list = None,
 ) -> float:
     """
     Calculates total pay based on hours worked, day type, and rates.
+    Supports multiple overtime thresholds.
     """
     if total_hours <= 0:
         return 0.0
+
+    # Default single threshold if None
+    if overtime_thresholds is None:
+        overtime_thresholds = [8.0]
+    if overtime_rates is None:
+        overtime_rates = [40.0]
+
+    # Validate inputs
+    if len(overtime_thresholds) != len(overtime_rates):
+        raise ValueError("overtime_thresholds and overtime_rates must have the same length")
+    if sorted(overtime_thresholds) != overtime_thresholds:
+        raise ValueError("overtime_thresholds must be in ascending order")
 
     # Sunday: all hours at sunday rate
     if day_type == "sunday":
         return total_hours * sunday_rate
 
-    # Calculate regular vs overtime hours
-    regular_hours = min(total_hours, overtime_threshold)
-    overtime_hours = max(total_hours - overtime_threshold, 0.0)
-
+    # Determine the base rate depending on the day
     if day_type == "weekday":
-        regular_pay = regular_hours * normal_rate
-        overtime_pay = overtime_hours * overtime_rate
+        base_rate = normal_rate
     elif day_type == "saturday":
-        regular_pay = regular_hours * saturday_rate
-        overtime_pay = overtime_hours * overtime_rate
+        base_rate = saturday_rate
     else:
         raise ValueError("Invalid day_type")
 
-    return regular_pay + overtime_pay
+    # Calculate tiered pay
+    remaining_hours = total_hours
+    pay = 0.0
+    thresholds = [0] + overtime_thresholds  # add 0 for easier tier calculation
+
+    for i in range(1, len(thresholds)):
+        hours_in_tier = min(remaining_hours, thresholds[i] - thresholds[i - 1])
+        if i == 1:
+            # first tier = regular hours
+            pay += hours_in_tier * base_rate
+        else:
+            # subsequent tiers = overtime rates
+            pay += hours_in_tier * overtime_rates[i - 2]
+        remaining_hours -= hours_in_tier
+        if remaining_hours <= 0:
+            break
+
+    # Hours beyond last threshold
+    if remaining_hours > 0:
+        pay += remaining_hours * overtime_rates[-1]
+
+    return pay
 
 
 # In[9]:
@@ -102,8 +131,8 @@ def calculate_income_from_ui(
     normal_rate: float = 30.0,
     saturday_rate: float = 40.0,
     sunday_rate: float = 50.0,
-    overtime_threshold: float = 8.0,
-    overtime_rate: float = 40.0,
+    overtime_thresholds: list = None,
+    overtime_rates: list = None,
 ) -> float:
     """
     High-level function to calculate income from UI inputs.
@@ -117,8 +146,8 @@ def calculate_income_from_ui(
         normal_rate=normal_rate,
         saturday_rate=saturday_rate,
         sunday_rate=sunday_rate,
-        overtime_threshold=overtime_threshold,
-        overtime_rate=overtime_rate,
+        overtime_thresholds=overtime_thresholds,
+        overtime_rates=overtime_rates,
     )
 
 
@@ -131,7 +160,7 @@ def calculate_income_from_ui(
 if __name__ == "__main__":
     shifts_example = [
         {"in_h": 8, "in_m": 0, "out_h": 12, "out_m": 0},
-        {"in_h": 14, "in_m": 0, "out_h": 18, "out_m": 0},
+        {"in_h": 14, "in_m": 0, "out_h": 20, "out_m": 0},
     ]
 
     income = calculate_income_from_ui(
@@ -140,8 +169,8 @@ if __name__ == "__main__":
         normal_rate=30,
         saturday_rate=40,
         sunday_rate=50,
-        overtime_threshold=8,
-        overtime_rate=40,
+        overtime_thresholds=[8, 10],  # first overtime at 8h, second at 10h
+        overtime_rates=[40, 50],      # rates for the overtime tiers
     )
 
     print(f"Income for the day: {income}")
