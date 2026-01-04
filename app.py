@@ -10,9 +10,9 @@ st.title("Income Calculator 💰")
 # 1. Rate inputs (optional)
 # -------------------------
 st.subheader("Rates (optional)")
-normal_rate = st.number_input("Normal Rate", min_value=0.0, value=30.0)
-saturday_rate = st.number_input("Saturday Rate", min_value=0.0, value=40.0)
-sunday_rate = st.number_input("Sunday Rate", min_value=0.0, value=50.0)
+normal_rate = st.number_input("Normal Rate", min_value=0.0, value=32.84)
+saturday_rate = st.number_input("Saturday Rate", min_value=0.0, value=45.97)
+sunday_rate = st.number_input("Sunday Rate", min_value=0.0, value=59.11)
 
 # -------------------------
 # 2. Multiple overtime thresholds
@@ -35,7 +35,7 @@ for i in range(int(num_thresholds)):
     default_threshold = 8.0 if i == 0 else 10.0 if i == 1 else min_value
     
     # Set default overtime rates: 40 for first, 50 for second
-    default_rate = 40.0 if i == 0 else 50.0 if i == 1 else 0.0
+    default_rate = 42.03 if i == 0 else 55.17 if i == 1 else 0.0
     
     threshold = col1.number_input(
         f"Overtime Threshold {i+1} (hours)",
